@@ -103,8 +103,8 @@ export default function LoginScreen() {
   };
 
   const handleDemoSignIn = async () => {
-    const demoEmail = 'sreelatha_edutech@gmail.com';
-    const demoPassword = 'Password123!';
+    const demoEmail = 'sreelatha.edutech.demo@gmail.com';
+    const demoPassword = 'Sreelatha@123';
     setValue('email', demoEmail);
     setValue('password', demoPassword);
     await handleSignIn({ email: demoEmail, password: demoPassword });
