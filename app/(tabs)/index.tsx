@@ -14,6 +14,7 @@ import { fetchCourses, fetchInstructors } from '../../utils/api';
 import CourseCard from '../../components/CourseCard';
 import SearchBar from '../../components/SearchBar';
 import CategoryFilter from '../../components/CategoryFilter';
+import SortFilterBar, { PriceBucket, SortOption } from '../../components/SortFilterBar';
 import FeaturedBanner from '../../components/FeaturedBanner';
 import OfflineBanner from '../../components/OfflineBanner';
 import { Colors } from '../../constants/colors';
@@ -83,6 +84,8 @@ export default function CoursesScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORY);
+  const [sortOption, setSortOption] = useState<SortOption>('featured');
+  const [priceBucket, setPriceBucket] = useState<PriceBucket>('all');
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -135,13 +138,31 @@ export default function CoursesScreen() {
           (c.instructorName ?? '').toLowerCase().includes(q)
       );
     }
+    if (priceBucket !== 'all') {
+      list = list.filter((c) => {
+        if (priceBucket === 'under-50') return c.price < 50;
+        if (priceBucket === '50-200') return c.price >= 50 && c.price <= 200;
+        return c.price > 200;
+      });
+    }
+    if (sortOption !== 'featured') {
+      list = [...list].sort((a, b) => {
+        if (sortOption === 'price-asc') return a.price - b.price;
+        if (sortOption === 'price-desc') return b.price - a.price;
+        return (b.rating ?? 0) - (a.rating ?? 0);
+      });
+    }
     return list;
-  }, [courses, search, selectedCategory]);
+  }, [courses, search, selectedCategory, priceBucket, sortOption]);
 
   const firstCourse = courses[0] as unknown as Record<string, unknown> | undefined;
   const isPremiumCourse = !!firstCourse && 'duration' in firstCourse && 'level' in firstCourse;
   const featured =
-    search.trim() === '' && selectedCategory === ALL_CATEGORY && isPremiumCourse
+    search.trim() === '' &&
+    selectedCategory === ALL_CATEGORY &&
+    sortOption === 'featured' &&
+    priceBucket === 'all' &&
+    isPremiumCourse
       ? courses[0]
       : null;
   const greetingName = user?.username ? user.username.split(/[\s_]/)[0] : 'there';
@@ -169,6 +190,12 @@ export default function CoursesScreen() {
                 onSelectCategory={setSelectedCategory}
               />
             )}
+            <SortFilterBar
+              sortOption={sortOption}
+              onSelectSort={setSortOption}
+              priceBucket={priceBucket}
+              onSelectPriceBucket={setPriceBucket}
+            />
             {featured && (
               <>
                 <Text className="font-heading text-[15px] text-foreground px-4 mb-2.5">

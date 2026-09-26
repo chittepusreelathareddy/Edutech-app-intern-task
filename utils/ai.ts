@@ -102,16 +102,43 @@ function isRetryableModelError(error: unknown): boolean {
   }
 }
 
-async function generateWithModel(
-  model: string,
-  prompt: string
-): Promise<CourseInsights> {
+async function generateTextWithModel(model: string, prompt: string): Promise<string> {
   const response = await ai.models.generateContent({
     model,
     contents: prompt,
   });
 
-  return parseInsightsResponse(response.text);
+  return response.text ?? '';
+}
+
+async function generateWithModel(
+  model: string,
+  prompt: string
+): Promise<CourseInsights> {
+  const text = await generateTextWithModel(model, prompt);
+  return parseInsightsResponse(text);
+}
+
+/**
+ * Runs `prompt` across the shared model fallback chain, retrying the next
+ * model when the current one hits a retryable error (503/429/etc). Returns
+ * the raw text from whichever model succeeds first.
+ */
+async function runAcrossModelChain(prompt: string): Promise<string | null> {
+  for (const model of GEMINI_MODELS) {
+    try {
+      const text = await generateTextWithModel(model, prompt);
+      return text;
+    } catch (error) {
+      if (isRetryableModelError(error)) {
+        console.log(`AI model ${model} unavailable, trying fallback...`, error);
+        continue;
+      }
+      console.log(`AI Error (${model}):`, error);
+      break;
+    }
+  }
+  return null;
 }
 
 export async function generateCourseInsights(course: Course): Promise<CourseInsights> {
@@ -146,4 +173,63 @@ export async function generateCourseInsights(course: Course): Promise<CourseInsi
     bestFor: prem.targetAudience || 'Developers, engineers, and tech professionals looking to level up.',
     aiSummary: prem.subtitle || course.description || `Comprehensive training module for ${course.title}.`,
   };
+}
+
+export interface ChatMessage {
+  role: 'user' | 'model';
+  text: string;
+}
+
+const ASSISTANT_FALLBACK =
+  "I'm having trouble answering right now — please try again in a moment.";
+
+function buildAssistantPrompt(
+  course: Course,
+  question: string,
+  history: ChatMessage[]
+): string {
+  const historyText = history
+    .map((m) => `${m.role === 'user' ? 'Student' : 'Assistant'}: ${m.text}`)
+    .join('\n');
+
+  return `
+You are a friendly, encouraging AI study assistant helping a student with ONE specific course.
+
+Course Title:
+${course.title}
+
+Description:
+${course.description}
+
+Category:
+${course.category}
+
+Only answer questions about this course, its subject matter, or how to study it effectively.
+If the student asks something unrelated to the course or its topic, politely redirect them
+back to the course in one short sentence.
+
+Keep answers concise (a few sentences), plain text (no markdown, no JSON), and in a warm,
+student-facing tone.
+
+${historyText ? `Conversation so far:\n${historyText}\n` : ''}
+Student: ${question}
+Assistant:`.trim();
+}
+
+export async function askCourseAssistant(
+  course: Course,
+  question: string,
+  history: ChatMessage[] = []
+): Promise<string> {
+  try {
+    const prompt = buildAssistantPrompt(course, question, history);
+    const text = await runAcrossModelChain(prompt);
+    if (text && text.trim()) {
+      return text.trim();
+    }
+    return ASSISTANT_FALLBACK;
+  } catch (error) {
+    console.log('AI assistant error:', error);
+    return ASSISTANT_FALLBACK;
+  }
 }

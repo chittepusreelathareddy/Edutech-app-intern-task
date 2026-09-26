@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useColorScheme } from 'nativewind';
 import { Colors } from '../../constants/colors';
 
 type IconName = keyof typeof Ionicons.glyphMap;
@@ -15,6 +16,11 @@ function tabIcon(focused: boolean, active: IconName, inactive: IconName) {
 }
 
 export default function TabsLayout() {
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const surface = isDark ? '#1E293B' : Colors.surface;
+  const border = isDark ? '#334155' : Colors.border;
+
   return (
     <Tabs
       screenOptions={{
@@ -22,8 +28,8 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: Colors.textLight,
         tabBarLabelStyle: { fontSize: 11, fontWeight: '700', marginTop: -2 },
         tabBarStyle: {
-          backgroundColor: Colors.surface,
-          borderTopColor: Colors.border,
+          backgroundColor: surface,
+          borderTopColor: border,
           borderTopWidth: 1,
           height: 62,
           paddingTop: 8,

@@ -11,6 +11,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useColorScheme } from 'nativewind';
 import { useAuth } from '../../store/authStore';
 import { useCourses } from '../../store/courseStore';
 import { logoutUser } from '../../utils/api';
@@ -18,6 +19,13 @@ import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import StreakCard from '../../components/StreakCard';
 import { Colors } from '../../constants/colors';
+import { ThemePreference, loadThemePreference, saveThemePreference } from '../../utils/theme';
+
+const THEME_OPTIONS: { key: ThemePreference; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { key: 'light', label: 'Light', icon: 'sunny-outline' },
+  { key: 'dark', label: 'Dark', icon: 'moon-outline' },
+  { key: 'system', label: 'System', icon: 'phone-portrait-outline' },
+];
 
 const AVATAR_KEY = 'profile_avatar_uri';
 const DEFAULT_AVATAR = 'https://picsum.photos/200/300';
@@ -27,6 +35,8 @@ export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const { bookmarks, enrolled } = useCourses();
   const [avatarUrl, setAvatarUrl] = React.useState(DEFAULT_AVATAR);
+  const { setColorScheme } = useColorScheme();
+  const [themePref, setThemePref] = React.useState<ThemePreference>('system');
 
   // BUGFIX (documented limitation): picked avatar used to live only in
   // component state, so it silently reset to the default image the next
@@ -36,6 +46,16 @@ export default function ProfileScreen() {
       if (saved) setAvatarUrl(saved);
     });
   }, []);
+
+  React.useEffect(() => {
+    loadThemePreference().then(setThemePref);
+  }, []);
+
+  const handleThemeChange = async (pref: ThemePreference) => {
+    setThemePref(pref);
+    setColorScheme(pref);
+    await saveThemePreference(pref);
+  };
 
   const performLogout = async () => {
     try {
@@ -193,8 +213,48 @@ export default function ProfileScreen() {
         ))}
       </View>
 
+      <View className="bg-surface mx-4 rounded-2xl p-4 border border-border mb-4">
+        <Text className="text-sm font-bold text-muted mb-3 uppercase tracking-wide">
+          Preferences
+        </Text>
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center gap-2.5">
+            <Ionicons name="contrast-outline" size={17} color={Colors.textSecondary} />
+            <Text className="text-sm text-muted">Theme</Text>
+          </View>
+          <View className="flex-row bg-background rounded-full p-1 gap-1 border border-border">
+            {THEME_OPTIONS.map((opt) => {
+              const isSelected = themePref === opt.key;
+              return (
+                <TouchableOpacity
+                  key={opt.key}
+                  onPress={() => handleThemeChange(opt.key)}
+                  activeOpacity={0.85}
+                  className={`flex-row items-center gap-1 px-3 py-1.5 rounded-full ${
+                    isSelected ? 'bg-primary' : ''
+                  }`}
+                >
+                  <Ionicons
+                    name={opt.icon}
+                    size={14}
+                    color={isSelected ? '#fff' : Colors.textSecondary}
+                  />
+                  <Text
+                    className={`text-[11px] font-bold ${
+                      isSelected ? 'text-white' : 'text-muted'
+                    }`}
+                  >
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+      </View>
+
       <TouchableOpacity
-        className="mx-4 bg-white border border-error/30 rounded-2xl py-3.5 items-center flex-row justify-center gap-2"
+        className="mx-4 bg-surface border border-error/30 rounded-2xl py-3.5 items-center flex-row justify-center gap-2"
         onPress={handleLogout}
       >
         <Ionicons name="log-out-outline" size={18} color={Colors.error} />

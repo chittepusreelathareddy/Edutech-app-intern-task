@@ -1,10 +1,11 @@
 import 'react-native-gesture-handler';
 import '../global.css';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Redirect, Stack } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
 import { Image } from 'expo-image';
 import { cssInterop, StyleSheet } from 'react-native-css-interop';
+import { useColorScheme } from 'nativewind';
 import * as SplashScreen from 'expo-splash-screen';
 import {
   useFonts,
@@ -16,6 +17,7 @@ import {
 } from '@expo-google-fonts/plus-jakarta-sans';
 import AuthProvider from '../providers/AuthProvider';
 import CourseProvider from '../providers/CourseProvider';
+import ProgressProvider from '../providers/ProgressProvider';
 import { useAuth } from '../store/authStore';
 import {
   requestNotificationPermission,
@@ -24,6 +26,7 @@ import {
 } from '../utils/notifications';
 import { recordDailyActivity } from '../utils/streak';
 import { Colors } from '../constants/colors';
+import { loadThemePreference } from '../utils/theme';
 
 StyleSheet.setFlag?.('darkMode', 'class');
 cssInterop(Image, { className: 'style' });
@@ -75,25 +78,35 @@ export default function RootLayout() {
     PlusJakartaSans_700Bold,
     PlusJakartaSans_800ExtraBold,
   });
+  const { setColorScheme } = useColorScheme();
+  const [themeLoaded, setThemeLoaded] = useState(false);
+
+  useEffect(() => {
+    loadThemePreference()
+      .then((pref) => setColorScheme(pref))
+      .finally(() => setThemeLoaded(true));
+  }, [setColorScheme]);
 
   const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded) {
+    if (fontsLoaded && themeLoaded) {
       await SplashScreen.hideAsync().catch(() => {});
     }
-  }, [fontsLoaded]);
+  }, [fontsLoaded, themeLoaded]);
 
   useEffect(() => {
     onLayoutRootView();
   }, [onLayoutRootView]);
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded || !themeLoaded) {
     return null;
   }
 
   return (
     <AuthProvider>
       <CourseProvider>
-        <RootNavigator />
+        <ProgressProvider>
+          <RootNavigator />
+        </ProgressProvider>
       </CourseProvider>
     </AuthProvider>
   );

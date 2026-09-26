@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Colors } from '../constants/colors';
 import { Course, useCourses } from '../store/courseStore';
+import { useProgress } from '../store/progressStore';
 import { getStableThumbnail } from '../utils/thumbnail';
 
 interface Props {
@@ -14,8 +15,10 @@ interface Props {
 function CourseCard({ course }: Props) {
   const router = useRouter();
   const { bookmarks, toggleBookmark } = useCourses();
+  const { getProgress } = useProgress();
   const isBookmarked = bookmarks.includes(String(course.id));
   const thumbnail = useMemo(() => getStableThumbnail(course), [course.id, course.thumbnail]);
+  const percent = getProgress(String(course.id)).percent;
 
   return (
     <TouchableOpacity
@@ -61,6 +64,14 @@ function CourseCard({ course }: Props) {
             color={isBookmarked ? Colors.bookmark : '#FFFFFF'}
           />
         </Pressable>
+        {percent > 0 && (
+          <View className="absolute bottom-0 left-0 right-0 h-1.5 bg-slate-900/30">
+            <View
+              className="h-full bg-primary"
+              style={{ width: `${Math.min(100, Math.max(0, percent))}%` }}
+            />
+          </View>
+        )}
       </View>
       <View className="p-3.5">
         <View className="flex-row items-center mb-2">
