@@ -19,7 +19,14 @@ function CourseCard({ course }: Props) {
 
   return (
     <TouchableOpacity
-      className="bg-surface rounded-xl mx-4 mb-3.5 overflow-hidden shadow-md elevation-3"
+      className="bg-surface rounded-2xl mx-4 mb-4 overflow-hidden border border-border/70"
+      style={{
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+        elevation: 4,
+      }}
       onPress={() =>
         router.push({
           pathname: `/course/${course.id}`,
@@ -28,42 +35,63 @@ function CourseCard({ course }: Props) {
           },
         })
       }
-      activeOpacity={0.85}
+      activeOpacity={0.9}
     >
-      <Image
-        source={{ uri: thumbnail }}
-        className="w-full h-40 bg-border"
-        contentFit="cover"
-        transition={200}
-      />
-      <View className="p-3">
-        <View className="flex-row items-center mb-1.5">
+      <View className="relative">
+        <Image
+          source={{ uri: thumbnail }}
+          className="w-full h-40 bg-border"
+          contentFit="cover"
+          transition={200}
+        />
+        <View className="absolute top-2.5 left-2.5 bg-slate-900/80 rounded-full px-2.5 py-1 flex-row items-center gap-1">
+          <Ionicons name="star" size={12} color={Colors.warning} />
+          <Text className="text-white text-[11px] font-bold">
+            {(course.rating ?? 0).toFixed(1)}
+          </Text>
+        </View>
+        <Pressable
+          onPress={() => toggleBookmark(String(course.id))}
+          hitSlop={8}
+          className="absolute top-2 right-2 w-9 h-9 rounded-full bg-slate-900/60 items-center justify-center"
+        >
+          <Ionicons
+            name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
+            size={18}
+            color={isBookmarked ? Colors.bookmark : '#FFFFFF'}
+          />
+        </Pressable>
+      </View>
+      <View className="p-3.5">
+        <View className="flex-row items-center mb-2">
           <Image
             source={{ uri: course.instructorAvatar }}
             className="w-6 h-6 rounded-full mr-1.5 bg-border"
             contentFit="cover"
           />
-          <Text className="text-xs text-primary font-semibold flex-1" numberOfLines={1}>
+          <Text className="text-xs text-muted font-semibold flex-1" numberOfLines={1}>
             {course.instructorName ?? 'Unknown'}
           </Text>
         </View>
-        <Text className="text-[15px] font-bold text-foreground mb-1" numberOfLines={2}>
+        <Text className="font-heading text-[15px] text-foreground mb-1 leading-5" numberOfLines={2}>
           {course.title}
         </Text>
-        <Text className="text-[13px] text-muted leading-[18px] mb-2" numberOfLines={2}>
+        <Text className="text-[13px] text-muted leading-[18px] mb-3" numberOfLines={2}>
           {course.description}
         </Text>
         <View className="flex-row justify-between items-center">
-          <Text className="text-[15px] font-bold text-secondary">
-            ${course.price.toFixed(2)}
-          </Text>
-          <Pressable onPress={() => toggleBookmark(String(course.id))} hitSlop={8}>
-            <Ionicons
-              name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
-              size={22}
-              color={isBookmarked ? Colors.bookmark : Colors.textSecondary}
-            />
-          </Pressable>
+          <View className="bg-primary-light rounded-full px-3 py-1.5">
+            <Text className="text-[13px] font-heading text-primary">
+              ${course.price.toFixed(2)}
+            </Text>
+          </View>
+          {!!course.category && (
+            <View className="bg-background border border-border rounded-full px-2.5 py-1">
+              <Text className="text-[10px] font-semibold text-muted uppercase tracking-wide">
+                {course.category}
+              </Text>
+            </View>
+          )}
         </View>
       </View>
     </TouchableOpacity>

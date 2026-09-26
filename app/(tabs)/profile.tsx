@@ -8,6 +8,8 @@ import {
   Platform,
 } from 'react-native';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../store/authStore';
 import { useCourses } from '../../store/courseStore';
@@ -15,6 +17,7 @@ import { logoutUser } from '../../utils/api';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import StreakCard from '../../components/StreakCard';
+import { Colors } from '../../constants/colors';
 
 const AVATAR_KEY = 'profile_avatar_uri';
 const DEFAULT_AVATAR = 'https://picsum.photos/200/300';
@@ -67,7 +70,7 @@ export default function ProfileScreen() {
   const handlePickImage = async () => {
     const permission =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
+
     if (!permission.granted) {
       Alert.alert(
         'Permission required',
@@ -75,7 +78,7 @@ export default function ProfileScreen() {
       );
       return;
     }
-    
+
     const result =
       await ImagePicker.launchImageLibraryAsync({
         mediaTypes:
@@ -84,7 +87,7 @@ export default function ProfileScreen() {
         aspect: [1, 1],
         quality: 0.8,
       });
-    
+
     if (!result.canceled) {
       const imageUri = result.assets[0].uri;
       setAvatarUrl(imageUri);
@@ -95,75 +98,107 @@ export default function ProfileScreen() {
   };
 
   const stats = [
-    { label: 'Enrolled', value: enrolled.length, icon: '🎓' },
-    { label: 'Bookmarked', value: bookmarks.length, icon: '🔖' },
+    { label: 'Enrolled', value: enrolled.length, icon: 'school-outline' as const },
+    { label: 'Bookmarked', value: bookmarks.length, icon: 'bookmark-outline' as const },
+  ];
+
+  const accountRows = [
+    { label: 'Username', value: user?.username, icon: 'person-outline' as const },
+    { label: 'Email', value: user?.email, icon: 'mail-outline' as const },
+    { label: 'Role', value: user?.role ?? 'Student', icon: 'ribbon-outline' as const },
   ];
 
   return (
     <ScrollView className="flex-1 bg-background" contentContainerClassName="pb-10">
-      <TouchableOpacity
-        className="items-center pt-8 pb-6 bg-surface border-b border-border"
-        onPress={handlePickImage}
-      >
-        {avatarUrl ? (
-          <Image
-            source={{ uri: avatarUrl }}
-            className="w-[90px] h-[90px] rounded-full mb-3"
-            contentFit="cover"
-          />
-        ) : (
-          <View className="w-[90px] h-[90px] rounded-full bg-primary justify-center items-center mb-3">
-            <Text className="text-white text-4xl font-bold">
-              {(user?.username ?? 'U')[0].toUpperCase()}
-            </Text>
-          </View>
-        )}
-        <Text className="text-xl font-extrabold text-foreground mb-1">
-          {user?.username ?? 'User'}
-        </Text>
-        <Text className="text-[13px] text-muted">{user?.email ?? ''}</Text>
-      </TouchableOpacity>
+      <View className="bg-slate-950">
+        <LinearGradient
+          colors={['#312E81', '#1E1B4B', '#0F172A']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          className="items-center pt-10 pb-8 px-6"
+        >
+          <TouchableOpacity onPress={handlePickImage} activeOpacity={0.85}>
+            <View
+              className="p-1 rounded-full mb-3"
+              style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
+            >
+              {avatarUrl ? (
+                <Image
+                  source={{ uri: avatarUrl }}
+                  className="w-[88px] h-[88px] rounded-full"
+                  contentFit="cover"
+                />
+              ) : (
+                <View className="w-[88px] h-[88px] rounded-full bg-primary justify-center items-center">
+                  <Text className="text-white text-4xl font-bold">
+                    {(user?.username ?? 'U')[0].toUpperCase()}
+                  </Text>
+                </View>
+              )}
+              <View className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-primary items-center justify-center border-2 border-slate-950">
+                <Ionicons name="camera" size={13} color="#fff" />
+              </View>
+            </View>
+          </TouchableOpacity>
+          <Text className="font-black text-xl text-white mb-1">
+            {user?.username ?? 'User'}
+          </Text>
+          <Text className="text-[13px] text-slate-300">{user?.email ?? ''}</Text>
+        </LinearGradient>
+      </View>
 
-      <View className="flex-row m-4 gap-3">
+      <View className="flex-row mx-4 -mt-6 gap-3">
         {stats.map((s) => (
           <View
             key={s.label}
-            className="flex-1 bg-surface rounded-xl p-4 items-center border border-border"
+            className="flex-1 bg-surface rounded-2xl p-4 items-center border border-border"
+            style={{
+              shadowColor: '#0F172A',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.08,
+              shadowRadius: 10,
+              elevation: 3,
+            }}
           >
-            <Text className="text-2xl mb-1">{s.icon}</Text>
-            <Text className="text-[22px] font-extrabold text-primary">{s.value}</Text>
+            <View className="w-9 h-9 rounded-full bg-primary-light items-center justify-center mb-1.5">
+              <Ionicons name={s.icon} size={17} color={Colors.primary} />
+            </View>
+            <Text className="text-[22px] font-black text-foreground">{s.value}</Text>
             <Text className="text-xs text-muted mt-0.5">{s.label}</Text>
           </View>
         ))}
       </View>
 
-      <StreakCard />
+      <View className="mt-4">
+        <StreakCard />
+      </View>
 
-      <View className="bg-surface mx-4 rounded-xl p-4 border border-border mb-4">
-        <Text className="text-sm font-bold text-muted mb-3 uppercase tracking-wide">
+      <View className="bg-surface mx-4 rounded-2xl p-4 border border-border mb-4">
+        <Text className="text-sm font-bold text-muted mb-2 uppercase tracking-wide">
           Account
         </Text>
-        <View className="flex-row justify-between py-2.5 border-b border-border">
-          <Text className="text-sm text-muted">Username</Text>
-          <Text className="text-sm text-foreground font-semibold">{user?.username}</Text>
-        </View>
-        <View className="flex-row justify-between py-2.5 border-b border-border">
-          <Text className="text-sm text-muted">Email</Text>
-          <Text className="text-sm text-foreground font-semibold">{user?.email}</Text>
-        </View>
-        <View className="flex-row justify-between py-2.5 border-b border-border">
-          <Text className="text-sm text-muted">Role</Text>
-          <Text className="text-sm text-foreground font-semibold">
-            {user?.role ?? 'Student'}
-          </Text>
-        </View>
+        {accountRows.map((row, idx) => (
+          <View
+            key={row.label}
+            className={`flex-row items-center justify-between py-3 ${
+              idx < accountRows.length - 1 ? 'border-b border-border' : ''
+            }`}
+          >
+            <View className="flex-row items-center gap-2.5">
+              <Ionicons name={row.icon} size={17} color={Colors.textSecondary} />
+              <Text className="text-sm text-muted">{row.label}</Text>
+            </View>
+            <Text className="text-sm text-foreground font-semibold">{row.value}</Text>
+          </View>
+        ))}
       </View>
 
       <TouchableOpacity
-        className="mx-4 bg-primary rounded-[10px] py-3.5 items-center"
+        className="mx-4 bg-white border border-error/30 rounded-2xl py-3.5 items-center flex-row justify-center gap-2"
         onPress={handleLogout}
       >
-        <Text className="text-white text-base font-bold">Logout</Text>
+        <Ionicons name="log-out-outline" size={18} color={Colors.error} />
+        <Text className="text-error text-base font-bold">Logout</Text>
       </TouchableOpacity>
     </ScrollView>
   );

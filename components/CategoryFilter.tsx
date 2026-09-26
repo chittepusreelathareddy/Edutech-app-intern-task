@@ -1,5 +1,6 @@
 import React from 'react';
 import { ScrollView, TouchableOpacity, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 interface Props {
   categories: string[];
@@ -25,12 +26,14 @@ export default function CategoryFilter({
             <TouchableOpacity
               key={cat}
               onPress={() => onSelectCategory(cat)}
-              className={`mr-2.5 px-4 py-2 rounded-full border transition-all ${
+              activeOpacity={0.85}
+              className={`mr-2.5 px-4 py-2 rounded-full border flex-row items-center gap-1.5 ${
                 isSelected
-                  ? 'bg-indigo-600 border-indigo-600 shadow-sm'
+                  ? 'bg-primary border-primary shadow-sm'
                   : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700'
               }`}
             >
+              {isSelected && <Ionicons name="checkmark-circle" size={13} color="#FFFFFF" />}
               <Text
                 className={`text-xs font-bold ${
                   isSelected

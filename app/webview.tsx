@@ -136,6 +136,10 @@ export default function CourseWebViewScreen() {
   if (error) {
     return (
       <View className="flex-1 justify-center items-center bg-background p-6">
+        <View className="w-16 h-16 rounded-full bg-red-50 items-center justify-center mb-4">
+          <Ionicons name="cloud-offline-outline" size={28} color={Colors.error} />
+        </View>
+        <Text className="text-foreground text-[15px] font-bold mb-1">Couldn&apos;t load content</Text>
         <Text className="text-error text-sm text-center">
           Failed to load course content. Please try again.
         </Text>
@@ -166,8 +170,11 @@ export default function CourseWebViewScreen() {
         }}
       />
       {loading && (
-        <View className="absolute inset-0 justify-center items-center bg-background/80">
-          <ActivityIndicator size="large" color={Colors.primary} />
+        <View className="absolute inset-0 justify-center items-center bg-background/95">
+          <View className="w-16 h-16 rounded-full bg-primary-light items-center justify-center mb-3">
+            <ActivityIndicator size="small" color={Colors.primary} />
+          </View>
+          <Text className="text-muted text-sm font-semibold">Loading course content…</Text>
         </View>
       )}
     </View>

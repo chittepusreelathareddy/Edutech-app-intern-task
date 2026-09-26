@@ -9,22 +9,30 @@ module.exports = {
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['PlusJakartaSans_400Regular'],
+        medium: ['PlusJakartaSans_500Medium'],
+        semibold: ['PlusJakartaSans_600SemiBold'],
+        heading: ['PlusJakartaSans_700Bold'],
+        black: ['PlusJakartaSans_800ExtraBold'],
+      },
       colors: {
         primary: {
-          DEFAULT: '#2563EB',
-          light: '#EFF6FF',
+          DEFAULT: '#4F46E5',
+          dark: '#4338CA',
+          light: '#EEF2FF',
         },
         secondary: '#7C3AED',
         background: '#F8FAFC',
         surface: '#FFFFFF',
-        foreground: '#1E293B',
+        foreground: '#0F172A',
         muted: {
           DEFAULT: '#64748B',
           light: '#94A3B8',
         },
         border: '#E2E8F0',
-        success: '#22C55E',
-        error: '#EF4444',
+        success: '#16A34A',
+        error: '#DC2626',
         warning: '#F59E0B',
         bookmark: '#F59E0B',
       },

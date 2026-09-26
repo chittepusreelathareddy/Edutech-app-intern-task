@@ -9,7 +9,9 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -30,6 +32,18 @@ const schema = z
   });
 
 type FormData = z.infer<typeof schema>;
+
+const FIELD_META = {
+  username: { label: 'Username', placeholder: 'johndoe', icon: 'person-outline' as const },
+  email: { label: 'Email', placeholder: 'you@example.com', icon: 'mail-outline' as const },
+  password: { label: 'Password', placeholder: '••••••••', icon: 'lock-closed-outline' as const, secure: true },
+  confirm: {
+    label: 'Confirm Password',
+    placeholder: '••••••••',
+    icon: 'lock-closed-outline' as const,
+    secure: true,
+  },
+};
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -92,92 +106,112 @@ export default function RegisterScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={20}
     >
-      <ScrollView
-        contentContainerStyle={{
-          flexGrow: 1,
-          padding: 24,
-          justifyContent: 'center',
-        }}
-        keyboardShouldPersistTaps="handled"
-        automaticallyAdjustKeyboardInsets
-        showsVerticalScrollIndicator={false}
-      >
-        <View className="items-center mb-8">
-          <Text className="text-[52px] mb-2">📚</Text>
-          <Text className="text-[26px] font-extrabold text-foreground mb-1">Create Account</Text>
-          <Text className="text-[15px] text-muted">Start your learning journey</Text>
-        </View>
-
-        {apiError && (
-          <View className="bg-red-100 dark:bg-red-950/40 border border-error p-3.5 rounded-[10px] mb-4">
-            <Text className="text-error text-sm font-semibold text-center">{apiError}</Text>
-          </View>
-        )}
-
-        {apiSuccess && (
-          <View className="bg-green-100 dark:bg-green-950/40 border border-green-500 p-3.5 rounded-[10px] mb-4">
-            <Text className="text-green-700 dark:text-green-300 text-sm font-semibold text-center">{apiSuccess}</Text>
-          </View>
-        )}
-
-        <View className="gap-1">
-          {(
-            [
-              { name: 'username' as const, label: 'Username', placeholder: 'johndoe', keyboardType: 'default' as const },
-              { name: 'email' as const, label: 'Email', placeholder: 'you@example.com', keyboardType: 'email-address' as const },
-              { name: 'password' as const, label: 'Password', placeholder: '••••••••', keyboardType: 'default' as const, secure: true },
-              { name: 'confirm' as const, label: 'Confirm Password', placeholder: '••••••••', keyboardType: 'default' as const, secure: true },
-            ] as const
-          ).map((field) => (
-            <View key={field.name}>
-              <Text className="text-sm font-semibold text-foreground mt-2.5">{field.label}</Text>
-              <Controller
-                control={control}
-                name={field.name}
-                render={({ field: { onChange, value } }) => (
-                  <TextInput
-                    className={`bg-surface rounded-[10px] px-3.5 py-3 text-[15px] text-foreground border mt-1 ${
-                      errors[field.name] ? 'border-error' : 'border-border'
-                    }`}
-                    value={value ?? ''}
-                    onChangeText={(text) => {
-                      if (apiError) setApiError(null);
-                      onChange(text);
-                    }}
-                    placeholder={field.placeholder}
-                    placeholderTextColor={Colors.textLight}
-                    keyboardType={field.keyboardType}
-                    autoCapitalize="none"
-                    secureTextEntry={'secure' in field && field.secure}
-                  />
-                )}
-              />
-              {errors[field.name] && (
-                <Text className="text-xs text-error mt-0.5">{errors[field.name]?.message}</Text>
-              )}
+      <View className="flex-1 bg-slate-950">
+        <LinearGradient
+          colors={['#1E1B4B', '#312E81', '#0F172A']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          className="absolute inset-0"
+        />
+        <ScrollView
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: 'flex-end',
+          }}
+          keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
+          showsVerticalScrollIndicator={false}
+        >
+          <View className="items-center pt-16 pb-8 px-6">
+            <View className="w-16 h-16 rounded-2xl bg-indigo-600/90 border border-indigo-400/30 items-center justify-center mb-4 shadow-xl">
+              <Ionicons name="rocket" size={28} color="#FFF" />
             </View>
-          ))}
-
-          <TouchableOpacity
-            className={`bg-primary rounded-[10px] py-3.5 items-center mt-5 ${isSubmitting ? 'opacity-60' : ''}`}
-            onPress={handleSubmit(onSubmit)}
-            disabled={isSubmitting}
-          >
-            <Text className="text-white text-base font-bold">
-              {isSubmitting ? 'Creating account...' : 'Create Account'}
+            <Text className="font-black text-[26px] text-white mb-1.5">Create Account</Text>
+            <Text className="font-medium text-[15px] text-slate-300">
+              Start your learning journey
             </Text>
-          </TouchableOpacity>
-
-          <View className="flex-row justify-center mt-5">
-            <Text className="text-muted text-sm">Already have an account? </Text>
-            <Link href="/(auth)/login" asChild>
-              <TouchableOpacity>
-                <Text className="text-primary text-sm font-bold">Sign In</Text>
-              </TouchableOpacity>
-            </Link>
           </View>
-        </View>
-      </ScrollView>
+
+          <View className="bg-background rounded-t-[32px] px-6 pt-8 pb-8 shadow-2xl">
+            {apiError && (
+              <View className="bg-red-50 border border-error/40 p-3.5 rounded-2xl mb-4 flex-row items-center gap-2">
+                <Ionicons name="alert-circle" size={18} color={Colors.error} />
+                <Text className="text-error text-[13px] font-semibold flex-1">{apiError}</Text>
+              </View>
+            )}
+
+            {apiSuccess && (
+              <View className="bg-green-50 border border-success/40 p-3.5 rounded-2xl mb-4 flex-row items-center gap-2">
+                <Ionicons name="checkmark-circle" size={18} color={Colors.success} />
+                <Text className="text-success text-[13px] font-semibold flex-1">{apiSuccess}</Text>
+              </View>
+            )}
+
+            <View className="gap-1">
+              {(Object.keys(FIELD_META) as Array<keyof typeof FIELD_META>).map((name) => {
+                const meta = FIELD_META[name];
+                return (
+                  <View key={name}>
+                    <Text className="font-semibold text-[13px] text-foreground mt-2.5 mb-1">
+                      {meta.label}
+                    </Text>
+                    <Controller
+                      control={control}
+                      name={name}
+                      render={({ field: { onChange, value } }) => (
+                        <View
+                          className={`flex-row items-center bg-surface rounded-2xl px-4 border ${
+                            errors[name] ? 'border-error' : 'border-border'
+                          }`}
+                        >
+                          <Ionicons name={meta.icon} size={18} color={Colors.textLight} />
+                          <TextInput
+                            className="flex-1 font-sans px-3 py-3.5 text-[15px] text-foreground"
+                            value={value ?? ''}
+                            onChangeText={(text) => {
+                              if (apiError) setApiError(null);
+                              onChange(text);
+                            }}
+                            placeholder={meta.placeholder}
+                            placeholderTextColor={Colors.textLight}
+                            keyboardType={name === 'email' ? 'email-address' : 'default'}
+                            autoCapitalize="none"
+                            secureTextEntry={'secure' in meta && meta.secure}
+                          />
+                        </View>
+                      )}
+                    />
+                    {errors[name] && (
+                      <Text className="text-xs text-error mt-0.5 ml-1">{errors[name]?.message}</Text>
+                    )}
+                  </View>
+                );
+              })}
+
+              <TouchableOpacity
+                className={`bg-primary rounded-2xl py-4 items-center mt-6 shadow-md active:opacity-90 ${
+                  isSubmitting ? 'opacity-60' : ''
+                }`}
+                onPress={handleSubmit(onSubmit)}
+                disabled={isSubmitting}
+              >
+                <Text className="font-heading text-white text-[15px]">
+                  {isSubmitting ? 'Creating account…' : 'Create Account'}
+                </Text>
+              </TouchableOpacity>
+
+              <View className="flex-row justify-center mt-6">
+                <Text className="text-muted text-sm">Already have an account? </Text>
+                <Link href="/(auth)/login" asChild>
+                  <TouchableOpacity>
+                    <Text className="text-primary text-sm font-bold">Sign In</Text>
+                  </TouchableOpacity>
+                </Link>
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+      </View>
     </KeyboardAvoidingView>
   );
 }

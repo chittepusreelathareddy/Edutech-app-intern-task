@@ -5,7 +5,13 @@ import { Colors } from '../../constants/colors';
 type IconName = keyof typeof Ionicons.glyphMap;
 
 function tabIcon(focused: boolean, active: IconName, inactive: IconName) {
-  return <Ionicons name={focused ? active : inactive} size={24} color={focused ? Colors.primary : Colors.textSecondary} />;
+  return (
+    <Ionicons
+      name={focused ? active : inactive}
+      size={focused ? 24 : 22}
+      color={focused ? Colors.primary : Colors.textLight}
+    />
+  );
 }
 
 export default function TabsLayout() {
@@ -13,8 +19,20 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.textSecondary,
-        tabBarStyle: { backgroundColor: Colors.surface, borderTopColor: Colors.border },
+        tabBarInactiveTintColor: Colors.textLight,
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '700', marginTop: -2 },
+        tabBarStyle: {
+          backgroundColor: Colors.surface,
+          borderTopColor: Colors.border,
+          borderTopWidth: 1,
+          height: 62,
+          paddingTop: 8,
+          paddingBottom: 8,
+          shadowColor: '#0F172A',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.05,
+          shadowRadius: 8,
+        },
         headerStyle: { backgroundColor: Colors.primary },
         headerTitleStyle: { color: Colors.surface, fontWeight: '700' },
         headerShadowVisible: false,

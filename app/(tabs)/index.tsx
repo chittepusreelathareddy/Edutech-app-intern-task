@@ -7,10 +7,14 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useCourses } from '../../store/courseStore';
+import { useAuth } from '../../store/authStore';
 import { fetchCourses, fetchInstructors } from '../../utils/api';
 import CourseCard from '../../components/CourseCard';
 import SearchBar from '../../components/SearchBar';
+import CategoryFilter from '../../components/CategoryFilter';
+import FeaturedBanner from '../../components/FeaturedBanner';
 import OfflineBanner from '../../components/OfflineBanner';
 import { Colors } from '../../constants/colors';
 import { Course } from '../../store/courseStore';
@@ -71,10 +75,14 @@ function buildCourses(products: ApiProduct[], users: ApiUser[]): Course[] {
   });
 }
 
+const ALL_CATEGORY = 'All';
+
 export default function CoursesScreen() {
   const { courses, setCourses } = useCourses();
+  const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORY);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -106,16 +114,37 @@ export default function CoursesScreen() {
     setRefreshing(false);
   }, [loadData]);
 
-  const filtered = useMemo(() => {
-    if (!search.trim()) return courses;
-    const q = search.toLowerCase();
-    return courses.filter(
-      (c) =>
-        c.title.toLowerCase().includes(q) ||
-        c.description.toLowerCase().includes(q) ||
-        (c.instructorName ?? '').toLowerCase().includes(q)
+  const categories = useMemo(() => {
+    const unique = Array.from(
+      new Set(courses.map((c) => c.category).filter((c): c is string => !!c))
     );
-  }, [courses, search]);
+    return [ALL_CATEGORY, ...unique];
+  }, [courses]);
+
+  const filtered = useMemo(() => {
+    let list = courses;
+    if (selectedCategory !== ALL_CATEGORY) {
+      list = list.filter((c) => c.category === selectedCategory);
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(
+        (c) =>
+          c.title.toLowerCase().includes(q) ||
+          c.description.toLowerCase().includes(q) ||
+          (c.instructorName ?? '').toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [courses, search, selectedCategory]);
+
+  const firstCourse = courses[0] as unknown as Record<string, unknown> | undefined;
+  const isPremiumCourse = !!firstCourse && 'duration' in firstCourse && 'level' in firstCourse;
+  const featured =
+    search.trim() === '' && selectedCategory === ALL_CATEGORY && isPremiumCourse
+      ? courses[0]
+      : null;
+  const greetingName = user?.username ? user.username.split(/[\s_]/)[0] : 'there';
 
   return (
     <View className="flex-1 bg-background">
@@ -125,23 +154,68 @@ export default function CoursesScreen() {
         keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) => <CourseCard course={item} />}
         ListHeaderComponent={
-          <SearchBar value={search} onChangeText={setSearch} />
+          <View>
+            <View className="px-4 pt-3 pb-4">
+              <Text className="text-[13px] font-semibold text-muted">Welcome back,</Text>
+              <Text className="font-black text-[22px] text-foreground" numberOfLines={1}>
+                {greetingName} 👋
+              </Text>
+            </View>
+            <SearchBar value={search} onChangeText={setSearch} />
+            {categories.length > 1 && (
+              <CategoryFilter
+                categories={categories}
+                selectedCategory={selectedCategory}
+                onSelectCategory={setSelectedCategory}
+              />
+            )}
+            {featured && (
+              <>
+                <Text className="font-heading text-[15px] text-foreground px-4 mb-2.5">
+                  Featured for you
+                </Text>
+                <FeaturedBanner course={featured as unknown as Parameters<typeof FeaturedBanner>[0]['course']} />
+                <Text className="font-heading text-[15px] text-foreground px-4 mb-1 mt-1">
+                  All courses
+                </Text>
+              </>
+            )}
+          </View>
         }
         ListEmptyComponent={
           loading ? (
-            <View className="items-center p-10">
-              <ActivityIndicator size="large" color={Colors.primary} />
+            <View className="items-center p-14">
+              <View className="w-16 h-16 rounded-full bg-primary-light items-center justify-center mb-4">
+                <ActivityIndicator size="small" color={Colors.primary} />
+              </View>
+              <Text className="text-muted text-sm font-semibold">Loading courses…</Text>
             </View>
           ) : loadError ? (
-            <View className="items-center p-10">
-              <Text className="text-error text-sm text-center mb-3">{loadError}</Text>
-              <TouchableOpacity className="bg-primary rounded-lg px-5 py-2.5" onPress={loadData}>
+            <View className="items-center p-14">
+              <View className="w-16 h-16 rounded-full bg-red-50 items-center justify-center mb-4">
+                <Ionicons name="cloud-offline-outline" size={28} color={Colors.error} />
+              </View>
+              <Text className="text-foreground text-[15px] font-bold text-center mb-1">
+                Couldn&apos;t load courses
+              </Text>
+              <Text className="text-error text-[13px] text-center mb-4">{loadError}</Text>
+              <TouchableOpacity
+                className="bg-primary rounded-2xl px-6 py-3 flex-row items-center gap-1.5"
+                onPress={loadData}
+              >
+                <Ionicons name="refresh" size={16} color="#fff" />
                 <Text className="text-white font-bold text-sm">Retry</Text>
               </TouchableOpacity>
             </View>
           ) : (
-            <View className="items-center p-10">
-              <Text className="text-muted text-sm">No courses found</Text>
+            <View className="items-center p-14">
+              <View className="w-16 h-16 rounded-full bg-primary-light items-center justify-center mb-4">
+                <Ionicons name="search-outline" size={26} color={Colors.primary} />
+              </View>
+              <Text className="text-foreground text-[15px] font-bold mb-1">No courses found</Text>
+              <Text className="text-muted text-[13px] text-center">
+                Try a different search term or category
+              </Text>
             </View>
           )
         }
@@ -153,7 +227,7 @@ export default function CoursesScreen() {
             tintColor={Colors.primary}
           />
         }
-        contentContainerClassName="pt-3 pb-6"
+        contentContainerClassName="pt-1 pb-6"
         showsVerticalScrollIndicator={false}
       />
     </View>
